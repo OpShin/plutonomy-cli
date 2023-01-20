@@ -32,6 +32,9 @@ executable plutonomy-cli
     build-depends:    
         , base ^>=4.14.3.0
         , plutonomy
+        , plutus-core
+        , bytestring
+        , megaparsec
     hs-source-dirs:   app
     default-language: Haskell2010
 
