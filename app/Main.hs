@@ -1,35 +1,70 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ViewPatterns #-}
+
 module Main where
-import System.IO
-import Control.Monad
 
-import qualified UntypedPlutusCore as UPLC
+import Options.Applicative
+
+import Control.Exception(throwIO)
+import Data.Function((&))
+import Plutonomy.UPLC(optimizeUPLC, statsUPLC)
+import PlutusCore.DeBruijn(FreeVariableError)
+import System.IO(stderr,stdout)
+import Text.PrettyBy.Default(display)
+import UntypedPlutusCore.Core(Term(..), Program(..))
+import UntypedPlutusCore.DeBruijn(deBruijnTerm)
+
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Char8 as B8
 import qualified UntypedPlutusCore.Parser as UPLC
-import UntypedPlutusCore.Core.Type (Version)
-import qualified Plutonomy
-
--- imported for parseTxt
-import qualified Data.ByteString.Lazy.Internal as T
-import PlutusCore.Quote (Quote, runQuote, runQuoteT)
-import PlutusCore.Default (DefaultFun, DefaultUni)
-import PlutusCore.Name (Name)
-import PlutusCore.Lexer (AlexPosn)
-
-stripAnnotationsTerm :: UPLC.Term Name DefaultUni DefaultFun a -> UPLC.Term Name DefaultUni DefaultFun ()
-stripAnnotationsTerm (UPLC.Var a n) = UPLC.Var () n
-
-
-stripAnnotations :: UPLC.Program Name DefaultUni DefaultFun a -> UPLC.Program Name DefaultUni DefaultFun ()
-stripAnnotations (UPLC.Program a v t) = UPLC.Program () (UPLC.Version () 1 0 0) (stripAnnotationsTerm t)
-
-parseTxt ::
-    T.ByteString
-    -> IO (UPLC.Program Name DefaultUni DefaultFun AlexPosn)
-parseTxt resTxt = runQuoteT $ UPLC.parseProgram resTxt
 
 main :: IO ()
 main = do
-    contents <- readFile "contract.uplc"
-    let contentsPacked = T.packChars contents
-    parseRes <- parseTxt contentsPacked
-    let optUPLC = Plutonomy.optimizeUPLC (stripAnnotations parseRes)
-    print contents
+    customExecParser (prefs showHelpOnEmpty) commandParser >>= \case
+        Optimize { input } -> do
+            bytes <- BL.readFile input
+            pgrm  <- parseDeBruijnProgram bytes
+            let pgrm' = optimizeUPLC pgrm
+            B8.hPutStrLn stderr (B8.pack (compare pgrm pgrm'))
+            B8.hPutStrLn stdout (B8.pack (display pgrm'))
+  where
+    parseDeBruijnProgram bytes = do
+        pgrm <- UPLC.parseProgram bytes & either throwIO (return . fmap (const ()))
+        term  <- deBruijnTerm @FreeVariableError (_progTerm pgrm) & either throwIO return
+        return pgrm { _progTerm = term }
+
+    percentRatio num den =
+        1000 * (1 - (fromIntegral num / fromIntegral den))
+        & round @Double
+        & fromIntegral @_ @Double
+        & (/ 10)
+
+    compare (statsUPLC -> (ast, size)) (statsUPLC -> (ast', size')) = do
+        unlines
+            [ "AST Nodes -" <> show (percentRatio ast' ast) <> "%"
+            , "Size      -" <> show (percentRatio size' size) <> "%"
+            ]
+
+-- Quick command-line
+
+data Command
+    = Optimize
+        { input :: FilePath
+        }
+
+commandParser :: ParserInfo Command
+commandParser = info (helper <*> parser) $ mconcat
+    [ progDesc "Optimize an Untyped Plutus Core (UPLC) program while preserving its semantic."
+    ]
+  where
+    parser =
+        Optimize <$> inputArg
+
+inputArg :: Parser FilePath
+inputArg = argument str $ mconcat
+    [ metavar "FILEPATH"
+    , help "Path to a .uplc file"
+    , completer (bashCompleter "file")
+    ]
