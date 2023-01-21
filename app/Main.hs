@@ -9,7 +9,8 @@ import Options.Applicative
 
 import Control.Exception(throwIO)
 import Data.Function((&))
-import Plutonomy.UPLC(optimizeUPLC, statsUPLC)
+import Plutonomy.UPLC(optimizeUPLCWith, statsUPLC)
+import Plutonomy.Optimize(defaultOptimizerOptions, aggressiveOptimizerOptions)
 import PlutusCore.DeBruijn(FreeVariableError)
 import System.IO(stderr,stdout)
 import Text.PrettyBy.Default(display)
@@ -23,10 +24,13 @@ import qualified UntypedPlutusCore.Parser as UPLC
 main :: IO ()
 main = do
     customExecParser (prefs showHelpOnEmpty) commandParser >>= \case
-        Optimize { input } -> do
+        Optimize { input, mode } -> do
             bytes <- BL.readFile input
             pgrm  <- parseDeBruijnProgram bytes
-            let pgrm' = optimizeUPLC pgrm
+            let opts = case mode of
+                    DefaultMode -> defaultOptimizerOptions
+                    AggressiveMode -> aggressiveOptimizerOptions
+            let pgrm' = optimizeUPLCWith opts pgrm
             B8.hPutStrLn stderr (B8.pack (compare pgrm pgrm'))
             B8.hPutStrLn stdout (B8.pack (display pgrm'))
   where
@@ -51,8 +55,10 @@ main = do
 
 data Command
     = Optimize
-        { input :: FilePath
+        { input :: FilePath,
+          mode :: OptimizerMode
         }
+
 
 commandParser :: ParserInfo Command
 commandParser = info (helper <*> parser) $ mconcat
@@ -60,7 +66,7 @@ commandParser = info (helper <*> parser) $ mconcat
     ]
   where
     parser =
-        Optimize <$> inputArg
+        Optimize <$> inputArg <*> optimizerModeParser
 
 inputArg :: Parser FilePath
 inputArg = argument str $ mconcat
@@ -68,3 +74,11 @@ inputArg = argument str $ mconcat
     , help "Path to a .uplc file"
     , completer (bashCompleter "file")
     ]
+
+data OptimizerMode = DefaultMode | AggressiveMode
+
+optimizerModeParser :: Parser OptimizerMode
+optimizerModeParser = defaultModeParser <|> aggressiveModeParser
+    where
+        defaultModeParser = flag' DefaultMode (long "default" <> help "Optimize with default optimizations settings")
+        aggressiveModeParser = flag' AggressiveMode (long "aggressive" <> help "Optimize with aggressive optimizations settings. May not preserve semantics.")
