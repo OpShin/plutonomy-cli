@@ -23,3 +23,5 @@ plutonomy-cli --help
 ```
 plutonomy-cli foo.uplc > foo.optimized.uplc
 ```
+
+> For your program to be parsed correctly, you need to ensure that each variable name is unique. This can be automated via [aiken](https://github.com/aiken-lang/aiken) with `aiken uplc flat foo.uplc -o /dev/stdout | aiken uplc unflat /dev/stdin -o foo_unique.uplc`
