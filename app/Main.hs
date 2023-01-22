@@ -34,9 +34,12 @@ main = do
             text <- BT.readFile input
             pgrm  <- parseDeBruijnProgram text
             let opts = case mode of
-                    DefaultMode -> defaultOptimizerOptions
-                    AggressiveMode -> aggressiveOptimizerOptions
-            let pgrm' = optimizeUPLCWith opts pgrm
+                    DefaultMode -> Left defaultOptimizerOptions
+                    AggressiveMode -> Left aggressiveOptimizerOptions
+                    NoneMode -> Right ()
+            let pgrm' = case opts of
+                    Left optopts -> optimizeUPLCWith optopts pgrm
+                    Right _ -> pgrm
             B8.hPutStrLn stderr (B8.pack (compare pgrm pgrm'))
             B8.hPutStrLn stdout (B8.pack (display pgrm'))
   where
@@ -82,10 +85,11 @@ inputArg = argument str $ mconcat
     , completer (bashCompleter "file")
     ]
 
-data OptimizerMode = DefaultMode | AggressiveMode
+data OptimizerMode = DefaultMode | AggressiveMode | NoneMode
 
 optimizerModeParser :: Parser OptimizerMode
-optimizerModeParser = defaultModeParser <|> aggressiveModeParser
+optimizerModeParser = defaultModeParser <|> aggressiveModeParser <|> noneModeParser
     where
         defaultModeParser = flag' DefaultMode (long "default" <> help "Optimize with default optimizations settings")
         aggressiveModeParser = flag' AggressiveMode (long "aggressive" <> help "Optimize with aggressive optimizations settings. May not preserve semantics.")
+        noneModeParser = flag' NoneMode (long "none" <> help "Do not optimize. May be used for debugging purposes (should preserve code).")
