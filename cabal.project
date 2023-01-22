@@ -15,14 +15,17 @@ index-state: cardano-haskell-packages 2022-10-25T20:00:00Z
 packages: .
 
 constraints:
-  , algebraic-graphs < 0.7
+  , algebraic-graphs >= 0.7
   , dependent-sum >= 0.7.1.0
-  , plutus-core == 1.0.0.1
+  , plutus-core == 1.1.0.0
+
+package nothunks
+  flags: +vector
 
 package plutonomy
-  flags: +plutus-f680ac697
+  flags: +CHaP
 
 source-repository-package
   type: git
   location: https://github.com/well-typed/plutonomy.git
-  tag: adfa36b3f4b1fbb7a205aeed36f6cde8c7ec4c8f
+  tag: 239e4047a2fc08b371e9f248b17f9edcd39767ad
