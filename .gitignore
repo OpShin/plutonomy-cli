@@ -1,6 +1,7 @@
 *.uplc
 *.log
 *.flat
+*.cbor
 
 # Created by https://www.toptal.com/developers/gitignore/api/haskell,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=haskell,visualstudiocode
