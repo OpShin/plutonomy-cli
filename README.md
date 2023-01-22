@@ -20,18 +20,12 @@ plutonomy-cli --help
 
 #### Example
 
-For your program to be parsed correctly, you need to ensure that each variable name is unique. This can be automated via [aiken](https://github.com/aiken-lang/aiken) and [uplc](https://githubg.com/ImperatorLang/uplc).
-
-```bash
-uplc dump foo.uplc --dialect aiken > foo.aiken.uplc
-aiken uplc flat foo.aiken.uplc -o /dev/stdout | aiken uplc unflat /dev/stdin -o foo.unique.uplc
-```
-
+For your program to be parsed correctly, you need to ensure that each variable name is unique.
 Further, you need to ensure that your code adheres to the Plutus dialect of UPLC.
 This can be achieved using [uplc](https://githubg.com/ImperatorLang/uplc).
 
 ```bash
-uplc dump foo.unique.uplc --dialect plutus > foo.plutus.uplc
+uplc dump foo.uplc --dialect plutus --unique-varnames > foo.plutus.uplc
 ```
 
 Finally, optimize the code using `plutonomy-cli`.
