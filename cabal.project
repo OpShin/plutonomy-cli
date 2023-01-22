@@ -9,8 +9,8 @@ repository cardano-haskell-packages
     c00aae8461a256275598500ea0e187588c35a5d5d7454fb57eac18d9edb86a56
     d4a35cd3121aa00d18544bb0ac01c3e1691d618f462c46129271bccf39f7e8ee
 
-index-state: 2023-01-22T00:00:00Z
-index-state: cardano-haskell-packages 2023-01-23T00:00:00Z
+index-state: 2022-09-27T00:00:00Z
+index-state: cardano-haskell-packages 2022-10-25T20:00:00Z
 
 packages: .
 
@@ -18,9 +18,7 @@ constraints:
   , algebraic-graphs < 0.7
   , dependent-sum >= 0.7.1.0
   , plutus-core == 1.0.0.1
-
-package nothunks
-  flags: +vector
+  , plutus-ledger-api == 1.0.0.1
 
 package plutonomy
   flags: +plutus-f680ac697
@@ -28,4 +26,4 @@ package plutonomy
 source-repository-package
   type: git
   location: https://github.com/well-typed/plutonomy.git
-  tag: 239e4047a2fc08b371e9f248b17f9edcd39767ad
+  tag: adfa36b3f4b1fbb7a205aeed36f6cde8c7ec4c8f
