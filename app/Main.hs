@@ -7,24 +7,33 @@
 module Main where
 
 import Options.Applicative
-
+import Control.Exception(throwIO, Exception)
 import Data.Function((&))
 import Plutonomy.UPLC(optimizeUPLCWith, statsUPLC)
 import Plutonomy.Optimize(defaultOptimizerOptions, aggressiveOptimizerOptions)
 import System.IO(stderr,stdout)
 import Text.PrettyBy.Default(display)
+import Text.Hex(decodeHex, encodeHex)
 
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.Text.IO as BT
 import qualified Data.ByteString.Short as SB
 
 import PlutusLedgerApi.Common(deserialiseUPLC, serialiseUPLC)
 
+data PlutonomyException = HexDecodeException
+    deriving (Show)
+
+instance Exception PlutonomyException
 
 main :: IO ()
 main = do
     customExecParser (prefs showHelpOnEmpty) commandParser >>= \case
         Optimize { input, mode } -> do
-            text <- B8.readFile input
+            hex <- BT.readFile input
+            text <- case decodeHex hex of
+                Nothing -> throwIO HexDecodeException
+                Just h -> return h
             let pgrm = deserialiseUPLC $ SB.toShort text
             let opts = case mode of
                     DefaultMode -> Left defaultOptimizerOptions
@@ -34,7 +43,7 @@ main = do
                     Left optopts -> optimizeUPLCWith optopts pgrm
                     Right _ -> pgrm
             B8.hPutStrLn stderr (B8.pack (compare pgrm pgrm'))
-            B8.hPutStrLn stdout (SB.fromShort (serialiseUPLC pgrm'))
+            BT.hPutStrLn stdout $ encodeHex $ SB.fromShort $ serialiseUPLC pgrm'
   where
 
     percentRatio num den =

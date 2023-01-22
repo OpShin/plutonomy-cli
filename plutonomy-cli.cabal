@@ -12,6 +12,8 @@ executable plutonomy-cli
     build-depends:
           base ^>=4.14.3.0
         , bytestring
+        , text
+        , hex-text
         , optparse-applicative
         , plutonomy
         , plutus-core
