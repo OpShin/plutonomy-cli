@@ -20,17 +20,16 @@ plutonomy-cli --help
 
 #### Example
 
-For your program to be parsed correctly, you need to ensure that each variable name is unique.
-Further, you need to ensure that your code adheres to the Plutus dialect of UPLC.
-This can be achieved using [uplc](https://githubg.com/ImperatorLang/uplc).
+First, generate or obtain the script as hex encoded single-wrapped cbor of the flat encoding.
+This is usually among the output of the build commands of [uplc](https://github.com/ImperatorLang/uplc), [eopsin](https://github.com/ImperatorLang/eopsin) or [aiken](https://github.com/aiken-lang/aiken).
 
 ```bash
-uplc dump foo.uplc --dialect plutus --unique-varnames > foo.plutus.uplc
+uplc build foo.uplc
 ```
 
-Finally, optimize the code using `plutonomy-cli`.
+Then optimize the code using `plutonomy-cli`.
 
 ```
-plutonomy-cli foo.plutus.uplc > foo.optimized.uplc
+plutonomy-cli foo/script.cbor > foo/optimized.cbor
 ```
 
