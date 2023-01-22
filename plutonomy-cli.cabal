@@ -16,5 +16,4 @@ executable plutonomy-cli
         , plutonomy
         , plutus-core
         , prettyprinter-configurable
-        , flat
-        , cborg
+        , plutus-ledger-api

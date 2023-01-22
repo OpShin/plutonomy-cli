@@ -8,44 +8,24 @@ module Main where
 
 import Options.Applicative
 
-import Control.Exception(throwIO, Exception)
-import Control.Monad(void)
 import Data.Function((&))
 import Plutonomy.UPLC(optimizeUPLCWith, statsUPLC)
 import Plutonomy.Optimize(defaultOptimizerOptions, aggressiveOptimizerOptions)
-import PlutusCore.DeBruijn(FreeVariableError)
-import PlutusCore.Error
-import PlutusCore.Quote (Quote, runQuote, runQuoteT)
 import System.IO(stderr,stdout)
 import Text.PrettyBy.Default(display)
-import UntypedPlutusCore.Core(Term(..), Program(..))
-import UntypedPlutusCore.DeBruijn(deBruijnTerm)
 
 import qualified Data.ByteString.Char8 as B8
-import qualified UntypedPlutusCore as UPLC
-import qualified PlutusCore as PLC
+import qualified Data.ByteString.Short as SB
 
-import Flat
-import Codec.CBOR.Decoding as CBOR
+import PlutusLedgerApi.Common(deserialiseUPLC, serialiseUPLC)
 
-import PlutusLedgerApi.Common.SerialisedScript(deserialiseUPLC)
-
-instance Exception ParserErrorBundle
-
-
-decodeViaFlat :: Flat.Get a -> CBOR.Decoder s a
-decodeViaFlat decoder = do
-    bs <- decodeBytes
-    case Flat.unflatWith decoder bs of
-        Left  err -> fail (show err)
-        Right v   -> pure v
 
 main :: IO ()
 main = do
     customExecParser (prefs showHelpOnEmpty) commandParser >>= \case
         Optimize { input, mode } -> do
             text <- B8.readFile input
-            pgrm <- parseDeBruijnProgram text
+            let pgrm = deserialiseUPLC $ SB.toShort text
             let opts = case mode of
                     DefaultMode -> Left defaultOptimizerOptions
                     AggressiveMode -> Left aggressiveOptimizerOptions
@@ -54,12 +34,8 @@ main = do
                     Left optopts -> optimizeUPLCWith optopts pgrm
                     Right _ -> pgrm
             B8.hPutStrLn stderr (B8.pack (compare pgrm pgrm'))
-            B8.hPutStrLn stdout (B8.pack (display pgrm'))
+            B8.hPutStrLn stdout (SB.fromShort (serialiseUPLC pgrm'))
   where
-    parseDeBruijnProgram text = do
-        let decoder = UPLC.decodeProgram (const Nothing) text
-        (p :: UPLC.Program UPLC.FakeNamedDeBruijn PLC.DefaultUni PLC.DefaultFun ()) <- decodeViaFlat flatDecoder
-        pure $ coerce p
 
     percentRatio num den =
         1000 * (1 - (fromIntegral num / fromIntegral den))
@@ -93,7 +69,7 @@ commandParser = info (helper <*> parser) $ mconcat
 inputArg :: Parser FilePath
 inputArg = argument str $ mconcat
     [ metavar "FILEPATH"
-    , help "Path to a .uplc file"
+    , help "Path to a .cbor file"
     , completer (bashCompleter "file")
     ]
 
