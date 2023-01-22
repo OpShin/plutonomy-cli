@@ -16,6 +16,4 @@ executable plutonomy-cli
         , hex-text
         , optparse-applicative
         , plutonomy
-        , plutus-core
-        , prettyprinter-configurable
         , plutus-ledger-api

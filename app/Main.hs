@@ -12,7 +12,6 @@ import Data.Function((&))
 import Plutonomy.UPLC(optimizeUPLCWith, statsUPLC)
 import Plutonomy.Optimize(defaultOptimizerOptions, aggressiveOptimizerOptions)
 import System.IO(stderr,stdout)
-import Text.PrettyBy.Default(display)
 import Text.Hex(decodeHex, encodeHex)
 
 import qualified Data.ByteString.Char8 as B8
