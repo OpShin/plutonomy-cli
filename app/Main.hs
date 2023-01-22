@@ -21,18 +21,31 @@ import Text.PrettyBy.Default(display)
 import UntypedPlutusCore.Core(Term(..), Program(..))
 import UntypedPlutusCore.DeBruijn(deBruijnTerm)
 
-import qualified Data.Text.IO as BT
 import qualified Data.ByteString.Char8 as B8
-import qualified UntypedPlutusCore.Parser as UPLC
+import qualified UntypedPlutusCore as UPLC
+import qualified PlutusCore as PLC
+
+import Flat
+import Codec.CBOR.Decoding as CBOR
+
+import PlutusLedgerApi.Common.SerialisedScript(deserialiseUPLC)
 
 instance Exception ParserErrorBundle
+
+
+decodeViaFlat :: Flat.Get a -> CBOR.Decoder s a
+decodeViaFlat decoder = do
+    bs <- decodeBytes
+    case Flat.unflatWith decoder bs of
+        Left  err -> fail (show err)
+        Right v   -> pure v
 
 main :: IO ()
 main = do
     customExecParser (prefs showHelpOnEmpty) commandParser >>= \case
         Optimize { input, mode } -> do
-            text <- BT.readFile input
-            pgrm  <- parseDeBruijnProgram text
+            text <- B8.readFile input
+            pgrm <- parseDeBruijnProgram text
             let opts = case mode of
                     DefaultMode -> Left defaultOptimizerOptions
                     AggressiveMode -> Left aggressiveOptimizerOptions
@@ -44,10 +57,9 @@ main = do
             B8.hPutStrLn stdout (B8.pack (display pgrm'))
   where
     parseDeBruijnProgram text = do
-        pgrm <- runQuoteT (UPLC.parseProgram @ParserErrorBundle text) & either throwIO return
-        pgrmM <- (return . void) pgrm
-        term  <- deBruijnTerm @FreeVariableError (_progTerm pgrmM) & either throwIO return
-        return pgrmM { _progTerm = term }
+        let decoder = UPLC.decodeProgram (const Nothing) text
+        (p :: UPLC.Program UPLC.FakeNamedDeBruijn PLC.DefaultUni PLC.DefaultFun ()) <- decodeViaFlat flatDecoder
+        pure $ coerce p
 
     percentRatio num den =
         1000 * (1 - (fromIntegral num / fromIntegral den))
