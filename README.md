@@ -30,6 +30,6 @@ uplc build foo.uplc
 Then optimize the code using `plutonomy-cli`.
 
 ```
-plutonomy-cli foo/script.cbor > foo/optimized.cbor
+plutonomy-cli --default foo/script.cbor > foo/optimized.cbor
 ```
 
