@@ -35,5 +35,10 @@ plutonomy-cli --default foo/script.cbor > foo/optimized.cbor
 
 ### Alternatives
 
-While plutonomy is an extremely powerful tool, it is unforunately not being actively maintained and may not be an adequate choice for new and upcoming projects. An alternative is provided by using the optimizer in [aiken](https://github.com/aiken-lang/aiken) or the Python [uplc](https://github.com/OpShin/uplc) package.
+While plutonomy is an extremely powerful tool, it is unfortunately not being actively maintained and may not be an adequate choice for new and upcoming projects.
+Alternatives include
+
+- the official [plutus](https://github.com/input-output-hk/plutus/releases) `uplc` binary. Run ` uplc-x86_64-linux-ghc928 optimize foo.uplc`.
+- _WIP_: [aiken](https://github.com/aiken-lang/aiken). Run `aiken shrink foo/script.cbor --cbor --hex`.
+- _WIP_: [uplc](https://github.com/OpShin/uplc). Run `uplc optimize foo.uplc`.
 
