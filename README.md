@@ -8,6 +8,8 @@ See disclaimer notice on Plutonomy.
 
 ### Installation instructions
 
+Install ghc 9.2.8 (i.e. using `ghcup`). Then run
+
 ```
 cabal install --overwrite-policy=always --install-method=copy plutonomy-cli
 ```
